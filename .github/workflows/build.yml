@@ -13,9 +13,10 @@ jobs:
           distribution: temurin
           java-version: '17'
       - run: |
-          if [ -f "whale-pet-android (1).zip" ]; then f="whale-pet-android (1).zip"; else f="whale-pet-android.zip"; fi
-          echo "using $f"
-          unzip -q "$f" -d src
+          for f in *.zip; do
+            echo "unzip $f"
+            unzip -q "$f" -d src
+          done
       - run: gradle -p src/whale-pet-android assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
         with:
