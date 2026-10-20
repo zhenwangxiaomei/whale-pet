@@ -29,6 +29,17 @@ jobs:
           unzip -oq whale-pet-android-current.zip -d src
           cp keystore.jks src/whale-pet-android/app/keystore.jks
       - run: gradle -p src/whale-pet-android -Pvc=${{ github.run_number }} assembleDebug --no-daemon
+      - name: 发布到 dist 分支（CDN 用）
+        run: |
+          cp src/whale-pet-android/app/build/outputs/apk/debug/app-debug.apk ./app-debug.apk
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git checkout --orphan dist-tmp
+          git rm -rf --cached . >/dev/null 2>&1 || true
+          find . -maxdepth 1 -mindepth 1 ! -name 'app-debug.apk' ! -name '.git' -exec rm -rf {} +
+          git add app-debug.apk
+          git commit -m "dist: build ${{ github.run_number }}"
+          git push -f origin HEAD:dist
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
