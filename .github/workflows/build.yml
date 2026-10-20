@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
   push:
     branches: [ main, master ]
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,8 +15,12 @@ jobs:
           distribution: temurin
           java-version: '17'
       - run: unzip -oq whale-pet-android-current.zip -d src
-      - run: gradle -p src/whale-pet-android assembleDebug --no-daemon
+      - run: gradle -p src/whale-pet-android -Pvc=${{ github.run_number }} assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: whale-pet-apk
           path: src/whale-pet-android/app/build/outputs/apk/debug/*.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          files: src/whale-pet-android/app/build/outputs/apk/debug/app-debug.apk
