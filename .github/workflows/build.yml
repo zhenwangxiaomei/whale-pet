@@ -14,16 +14,21 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: actions/cache@v4
-        with:
-          path: ~/.android/debug.keystore
-          key: debug-keystore-${{ github.repository }}
-      - run: unzip -oq whale-pet-android-current.zip -d src
+      - name: 准备签名
+        run: |
+          if [ ! -f keystore.jks ]; then
+            keytool -genkeypair -keystore keystore.jks -alias whalepet \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass whalepet123 -keypass whalepet123 -dname "CN=whale-pet"
+            git config user.name "github-actions"
+            git config user.email "actions@github.com"
+            git add keystore.jks
+            git commit -m "chore: add signing keystore"
+            git push
+          fi
+          unzip -oq whale-pet-android-current.zip -d src
+          cp keystore.jks src/whale-pet-android/app/keystore.jks
       - run: gradle -p src/whale-pet-android -Pvc=${{ github.run_number }} assembleDebug --no-daemon
-      - uses: actions/upload-artifact@v4
-        with:
-          name: whale-pet-apk
-          path: src/whale-pet-android/app/build/outputs/apk/debug/*.apk
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
